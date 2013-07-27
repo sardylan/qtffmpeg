@@ -17,6 +17,12 @@ public:
     
 private:
     Ui::MainWindow *ui;
+
+private slots:
+    void chooseInput();
+    void chooseOutput();
+    void chooseFFmpeg();
+
 };
 
 #endif // MAINWINDOW_HPP
