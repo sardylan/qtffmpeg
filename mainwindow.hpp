@@ -17,11 +17,13 @@ public:
     
 private:
     Ui::MainWindow *ui;
+    void osProber();
 
 private slots:
     void chooseInput();
     void chooseOutput();
     void chooseFFmpeg();
+    void cmdConstructor();
 
 };
 
