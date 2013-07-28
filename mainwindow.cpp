@@ -2,11 +2,10 @@
 #include <QFileInfo>
 #include <QFileDialog>
 #include <QProcess>
+#include <QDebug>
 
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
-
-#include "ffprocess.hpp"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -14,7 +13,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    proc = new ffProcess();
+    proc = new QProcess(this);
+
 
     can_run = 0;
 
@@ -27,6 +27,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->lineInput, SIGNAL(textChanged(QString)), this, SLOT(cmdConstructor()));
     connect(ui->lineOutput, SIGNAL(textChanged(QString)), this, SLOT(cmdConstructor()));
     connect(ui->lineFFMpeg, SIGNAL(textChanged(QString)), this, SLOT(cmdConstructor()));
+
+    connect(proc, SIGNAL(stateChanged(QProcess::ProcessState)), this, SLOT(ffProcessChangeState()));
 
     osProber();
 }
@@ -204,7 +206,13 @@ void MainWindow::runFFmpeg()
         for(i=0; i < arguments.count()-1; i++)
             args.append(arguments.at(i+1));
 
-        proc->start(program, args);
+        if(proc->state() == QProcess::NotRunning) {
+            proc->start(program, args);
+            proc->deleteLater();
+            qDebug() << program;
+            qDebug() << args;
+            proc->waitForFinished();
+        }
     } else {
         setStatusBarMessage("Please provide all informations!!!");
     }
@@ -213,4 +221,24 @@ void MainWindow::runFFmpeg()
 void MainWindow::setStatusBarMessage(QString text)
 {
     ui->statusBar->showMessage(text, 10000);
+}
+
+void MainWindow::ffProcessChangeState()
+{
+    QProcess::ProcessState state;
+    QString message;
+
+    message.clear();
+
+    state = proc->state();
+
+    if(state == QProcess::NotRunning)
+        message = "ERROR!!! FFmpeg is not running!!!";
+    else if(state == QProcess::Starting)
+        message = "ERROR!!! FFmpeg has not yet been invoked!!!";
+    else
+        message = "FFmpeg is running...";
+
+    qDebug() << message;
+    MainWindow::setStatusBarMessage(message);
 }

@@ -5,8 +5,6 @@
 #include <QString>
 #include <QProcess>
 
-#include "ffprocess.hpp"
-
 namespace Ui {
 class MainWindow;
 }
@@ -25,7 +23,7 @@ private:
     void osProber();
     QStringList arguments;
     int can_run;
-    ffProcess* proc;
+    QProcess* proc;
 
 private slots:
     void chooseInput();
@@ -33,6 +31,7 @@ private slots:
     void chooseFFmpeg();
     void cmdConstructor();
     void runFFmpeg();
+    void ffProcessChangeState();
 
 };
 

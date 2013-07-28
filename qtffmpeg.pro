@@ -13,10 +13,8 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
-    ffprocess.cpp
+        mainwindow.cpp
 
-HEADERS  += mainwindow.hpp \
-    ffprocess.hpp
+HEADERS  += mainwindow.hpp
 
 FORMS    += mainwindow.ui
