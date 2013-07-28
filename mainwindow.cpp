@@ -1,9 +1,12 @@
 #include <QString>
 #include <QFileInfo>
 #include <QFileDialog>
+#include <QProcess>
 
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
+
+#include "ffprocess.hpp"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -11,13 +14,19 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    MainWindow::connect(ui->buttonInput, SIGNAL(clicked()), this, SLOT(chooseInput()));
-    MainWindow::connect(ui->buttonOutput, SIGNAL(clicked()), this, SLOT(chooseOutput()));
-    MainWindow::connect(ui->buttonFFmpeg, SIGNAL(clicked()), this, SLOT(chooseFFmpeg()));
+    proc = new ffProcess();
 
-    MainWindow::connect(ui->lineInput, SIGNAL(textChanged(QString)), this, SLOT(cmdConstructor()));
-    MainWindow::connect(ui->lineOutput, SIGNAL(textChanged(QString)), this, SLOT(cmdConstructor()));
-    MainWindow::connect(ui->lineFFMpeg, SIGNAL(textChanged(QString)), this, SLOT(cmdConstructor()));
+    can_run = 0;
+
+    connect(ui->buttonInput, SIGNAL(clicked()), this, SLOT(chooseInput()));
+    connect(ui->buttonOutput, SIGNAL(clicked()), this, SLOT(chooseOutput()));
+    connect(ui->buttonFFmpeg, SIGNAL(clicked()), this, SLOT(chooseFFmpeg()));
+
+    connect(ui->buttonRun, SIGNAL(clicked()), this, SLOT(runFFmpeg()));
+
+    connect(ui->lineInput, SIGNAL(textChanged(QString)), this, SLOT(cmdConstructor()));
+    connect(ui->lineOutput, SIGNAL(textChanged(QString)), this, SLOT(cmdConstructor()));
+    connect(ui->lineFFMpeg, SIGNAL(textChanged(QString)), this, SLOT(cmdConstructor()));
 
     osProber();
 }
@@ -117,7 +126,7 @@ void MainWindow::cmdConstructor()
 {
     QString cmd;
     QString output_params;
-    QString output_params_common;
+    int format_defined;
     QFileInfo input;
     QFileInfo output;
     QFileInfo ffmpeg;
@@ -126,40 +135,82 @@ void MainWindow::cmdConstructor()
     output.setFile(ui->lineOutput->text());
     ffmpeg.setFile(ui->lineFFMpeg->text());
 
+    format_defined = 0;
+
     cmd.clear();
     output_params.clear();
-    output_params_common.clear();
+    arguments.clear();
 
-    output_params_common.append("-ac 2 -ar 44100");
+    if(output.suffix() == "wav" || output.suffix() == "mp3")
+        format_defined = 1;
 
-    if(output.suffix() == "mp3")
-        output_params.append("-codec:a libmp3lame -b:a 320k");
-
-    if(output.suffix() == "wav")
-        output_params.append("-codec:a pcm_s16le");
-
-    if(output_params.isEmpty() == false && ffmpeg.exists() == true) {
+    if(format_defined == 1 && ffmpeg.exists() == true) {
+        cmd.clear();
         cmd.append("\"");
         cmd.append(ui->lineFFMpeg->text());
         cmd.append("\"");
-        cmd.append(" ");
+        arguments.append(cmd);
 
+        cmd.clear();
         cmd.append("-i ");
         cmd.append("\"");
         cmd.append(ui->lineInput->text());
         cmd.append("\"");
-        cmd.append(" ");
+        arguments.append(cmd);
 
+        cmd.clear();
         cmd.append(output_params);
-        cmd.append(" ");
 
-        cmd.append(output_params_common);
-        cmd.append(" ");
+        arguments.append("-codec:a");
 
+        if(output.suffix() == "mp3") {
+            arguments.append("libmp3lame");
+            arguments.append("-b:a");
+            arguments.append("320k");
+        }
+
+        if(output.suffix() == "wav") {
+            arguments.append("pcm_s16le");
+        }
+
+        arguments.append("-ac");
+        arguments.append("2");
+        arguments.append("-ar");
+        arguments.append("44100");
+
+        cmd.clear();
         cmd.append("\"");
         cmd.append(ui->lineOutput->text());
         cmd.append("\"");
+        arguments.append(cmd);
+
+        can_run = 1;
+    } else {
+        can_run = 0;
     }
 
-    ui->textCmd->setText(cmd);
+    ui->textCmd->setText(arguments.join(" "));
+}
+
+void MainWindow::runFFmpeg()
+{
+    QString program;
+    QStringList args;
+    int i;
+
+    if(can_run == 1) {
+        program = arguments.at(0);
+
+        for(i=0; i < arguments.count()-1; i++)
+            args.append(arguments.at(i+1));
+
+        proc->start(program, args);
+    } else {
+        setStatusBarMessage("Please provide all informations!!!");
+    }
+}
+
+void MainWindow::setStatusBarMessage(QString text)
+{
+    ui->statusBar->showMessage(text, 10000);
 }
