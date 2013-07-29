@@ -31,6 +31,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(proc, SIGNAL(stateChanged(QProcess::ProcessState)), this, SLOT(ffProcessChangeState()));
 
     osProber();
+
+    ui->lineInput->setText("a.aac");
+    ui->lineOutput->setText("out.wav");
 }
 
 MainWindow::~MainWindow()
@@ -126,8 +129,6 @@ void MainWindow::chooseFFmpeg()
 
 void MainWindow::cmdConstructor()
 {
-    QString cmd;
-    QString output_params;
     int format_defined;
     QFileInfo input;
     QFileInfo output;
@@ -139,30 +140,15 @@ void MainWindow::cmdConstructor()
 
     format_defined = 0;
 
-    cmd.clear();
-    output_params.clear();
     arguments.clear();
 
     if(output.suffix() == "wav" || output.suffix() == "mp3")
         format_defined = 1;
 
     if(format_defined == 1 && ffmpeg.exists() == true) {
-        cmd.clear();
-        cmd.append("\"");
-        cmd.append(ui->lineFFMpeg->text());
-        cmd.append("\"");
-        arguments.append(cmd);
-
-        cmd.clear();
-        cmd.append("-i ");
-        cmd.append("\"");
-        cmd.append(ui->lineInput->text());
-        cmd.append("\"");
-        arguments.append(cmd);
-
-        cmd.clear();
-        cmd.append(output_params);
-
+        arguments.append(ui->lineFFMpeg->text());
+        arguments.append("-i");
+        arguments.append(ui->lineInput->text());
         arguments.append("-codec:a");
 
         if(output.suffix() == "mp3") {
@@ -179,12 +165,7 @@ void MainWindow::cmdConstructor()
         arguments.append("2");
         arguments.append("-ar");
         arguments.append("44100");
-
-        cmd.clear();
-        cmd.append("\"");
-        cmd.append(ui->lineOutput->text());
-        cmd.append("\"");
-        arguments.append(cmd);
+        arguments.append(ui->lineOutput->text());
 
         can_run = 1;
     } else {
@@ -206,13 +187,10 @@ void MainWindow::runFFmpeg()
         for(i=0; i < arguments.count()-1; i++)
             args.append(arguments.at(i+1));
 
-        if(proc->state() == QProcess::NotRunning) {
-            proc->start(program, args);
-            proc->deleteLater();
-            qDebug() << program;
-            qDebug() << args;
-            proc->waitForFinished();
-        }
+        proc->startDetached(program, args);
+        qDebug() << program;
+        qDebug() << args;
+        qDebug() << proc->error();
     } else {
         setStatusBarMessage("Please provide all informations!!!");
     }
