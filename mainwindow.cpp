@@ -2,7 +2,6 @@
 #include <QFileInfo>
 #include <QFileDialog>
 #include <QProcess>
-#include <QDebug>
 
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
@@ -29,6 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->lineFFMpeg, SIGNAL(textChanged(QString)), this, SLOT(cmdConstructor()));
 
     connect(proc, SIGNAL(stateChanged(QProcess::ProcessState)), this, SLOT(ffProcessChangeState()));
+    connect(proc, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(ffProcessFinished()));
 
     osProber();
 
@@ -47,7 +47,7 @@ void MainWindow::osProber()
 #ifdef Q_OS_LINUX
     ui->lineFFMpeg->setText("/usr/bin/ffmpeg");
 #endif
-#ifdef Q_OS_WIN32
+#ifdef Q_OS_WIN
     ui->lineFFMpeg->setText("ffmpeg.exe");
 #endif
 }
@@ -108,7 +108,7 @@ void MainWindow::chooseFFmpeg()
 #ifdef Q_OS_LINUX
     filters << "FFmpeg Executables(ffmpeg)";
 #endif
-#ifdef Q_OS_WIN32
+#ifdef Q_OS_WIN
     filters << "FFmpeg Executables(ffmpeg.exe)";
 #endif
 
@@ -165,6 +165,8 @@ void MainWindow::cmdConstructor()
         arguments.append("2");
         arguments.append("-ar");
         arguments.append("44100");
+
+        arguments.append("-y");
         arguments.append(ui->lineOutput->text());
 
         can_run = 1;
@@ -188,9 +190,9 @@ void MainWindow::runFFmpeg()
             args.append(arguments.at(i+1));
 
         proc->startDetached(program, args);
-        qDebug() << program;
-        qDebug() << args;
-        qDebug() << proc->error();
+        proc->deleteLater();
+
+        ui->buttonRun->setEnabled(false);
     } else {
         setStatusBarMessage("Please provide all informations!!!");
     }
@@ -210,13 +212,18 @@ void MainWindow::ffProcessChangeState()
 
     state = proc->state();
 
-    if(state == QProcess::NotRunning)
+    if(state == QProcess::NotRunning) {
         message = "ERROR!!! FFmpeg is not running!!!";
-    else if(state == QProcess::Starting)
+    } else if(state == QProcess::Starting) {
         message = "ERROR!!! FFmpeg has not yet been invoked!!!";
-    else
+    } else {
         message = "FFmpeg is running...";
+    }
 
-    qDebug() << message;
-    MainWindow::setStatusBarMessage(message);
+    setStatusBarMessage(message);
+}
+
+void MainWindow::ffProcessFinished()
+{
+    ui->buttonRun->setEnabled(true);
 }
