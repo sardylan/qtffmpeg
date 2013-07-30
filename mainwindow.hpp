@@ -32,6 +32,7 @@ private slots:
     void cmdConstructor();
     void runFFmpeg();
     void ffProcessChangeState();
+    void ffProcessStarted();
     void ffProcessFinished();
 
 };

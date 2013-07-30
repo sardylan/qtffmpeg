@@ -14,7 +14,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     proc = new QProcess(this);
 
-
     can_run = 0;
 
     connect(ui->buttonInput, SIGNAL(clicked()), this, SLOT(chooseInput()));
@@ -28,7 +27,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->lineFFMpeg, SIGNAL(textChanged(QString)), this, SLOT(cmdConstructor()));
 
     connect(proc, SIGNAL(stateChanged(QProcess::ProcessState)), this, SLOT(ffProcessChangeState()));
-    connect(proc, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(ffProcessFinished()));
+    connect(proc, SIGNAL(started()), this, SLOT(ffProcessStarted()));
+    connect(proc, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(ffProcessFinished()));
 
     osProber();
 
@@ -189,10 +189,13 @@ void MainWindow::runFFmpeg()
         for(i=0; i < arguments.count()-1; i++)
             args.append(arguments.at(i+1));
 
-        proc->startDetached(program, args);
-        proc->deleteLater();
-
-        ui->buttonRun->setEnabled(false);
+        if(proc->state() == QProcess::NotRunning) {
+            proc->start(program, args);
+            //proc->deleteLater();
+            //proc->waitForStarted();
+        } else {
+            setStatusBarMessage("FFmpeg already running!!!");
+        }
     } else {
         setStatusBarMessage("Please provide all informations!!!");
     }
@@ -223,7 +226,14 @@ void MainWindow::ffProcessChangeState()
     setStatusBarMessage(message);
 }
 
+void MainWindow::ffProcessStarted()
+{
+    ui->buttonRun->setEnabled(false);
+    setStatusBarMessage("Running FFmpeg... Please wait...");
+}
+
 void MainWindow::ffProcessFinished()
 {
     ui->buttonRun->setEnabled(true);
+    setStatusBarMessage("Finished!!");
 }
