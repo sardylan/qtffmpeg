@@ -20,10 +20,12 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    void osProber();
     QStringList arguments;
     int can_run;
     QProcess* proc;
+
+    void osProber();
+    int ffTimeParser(QString);
 
 private slots:
     void chooseInput();

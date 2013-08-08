@@ -2,6 +2,8 @@
 #include <QFileInfo>
 #include <QFileDialog>
 #include <QProcess>
+#include <QTextStream>
+#include <QDebug>
 
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
@@ -13,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     proc = new QProcess(this);
+    proc->setProcessChannelMode(QProcess::SeparateChannels);
 
     can_run = 0;
 
@@ -272,7 +275,7 @@ void MainWindow::runFFmpeg()
             args.append(arguments.at(i+1));
 
         if(proc->state() == QProcess::NotRunning) {
-            proc->start(program, args);
+            proc->start(program, args, QIODevice::ReadOnly);
             //proc->deleteLater();
             //proc->waitForStarted();
         } else {
@@ -322,5 +325,56 @@ void MainWindow::ffProcessFinished()
 
 void MainWindow::ffProcessParseLog()
 {
-    ui->progressBar->setValue(4);
+    QByteArray raw;
+    QStringList lines;
+    QString line;
+
+    QStringList elems;
+    QString duration;
+
+    QString temp;
+
+    raw = proc->readAllStandardError();
+    lines = QString(raw).split("\n");
+
+    foreach(line, lines) {
+        if(line.contains("Duration")) {
+            while(line.startsWith(" "))
+                line.remove(0, 1);
+
+            duration = line.split(" ").at(1);
+            duration.chop(4);
+            ui->progressBar->setMaximum(ffTimeParser(duration));
+        }
+
+        if(line.contains("time")) {
+            while(line.startsWith(" "))
+                line.remove(0, 1);
+
+            elems = line.split(' ');
+
+            foreach(temp, elems){
+                if(temp.startsWith("time=")) {
+                    duration = temp.split("=").at(1);
+                    duration.chop(3);
+                    ui->progressBar->setValue(ffTimeParser(duration));
+                }
+            }
+        }
+    }
+}
+
+int MainWindow::ffTimeParser(QString input)
+{
+    int ret;
+    QStringList split;
+
+    ret = 0;
+
+    if(input.length() > 0) {
+        split = input.split(":");
+        ret = (split.at(0).toInt() * 3600) + (split.at(1).toInt() * 60) + split.at(2).toInt();
+    }
+
+    return ret;
 }
