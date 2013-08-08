@@ -12,12 +12,12 @@ class MainWindow;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-    
+
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void setStatusBarMessage(QString);
-    
+
 private:
     Ui::MainWindow *ui;
     void osProber();
@@ -29,11 +29,14 @@ private slots:
     void chooseInput();
     void chooseOutput();
     void chooseFFmpeg();
+    void cmdPreConstructorOutput();
+    void cmdPreConstructorCombo();
     void cmdConstructor();
     void runFFmpeg();
     void ffProcessChangeState();
     void ffProcessStarted();
     void ffProcessFinished();
+    void ffProcessParseLog();
 
 };
 

@@ -23,17 +23,16 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->buttonRun, SIGNAL(clicked()), this, SLOT(runFFmpeg()));
 
     connect(ui->lineInput, SIGNAL(textChanged(QString)), this, SLOT(cmdConstructor()));
-    connect(ui->lineOutput, SIGNAL(textChanged(QString)), this, SLOT(cmdConstructor()));
     connect(ui->lineFFMpeg, SIGNAL(textChanged(QString)), this, SLOT(cmdConstructor()));
+    connect(ui->lineOutput, SIGNAL(textChanged(QString)), this, SLOT(cmdPreConstructorOutput()));
+    connect(ui->comboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(cmdPreConstructorCombo()));
 
     connect(proc, SIGNAL(stateChanged(QProcess::ProcessState)), this, SLOT(ffProcessChangeState()));
     connect(proc, SIGNAL(started()), this, SLOT(ffProcessStarted()));
     connect(proc, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(ffProcessFinished()));
+    connect(proc, SIGNAL(readyReadStandardError()), this, SLOT(ffProcessParseLog()));
 
     osProber();
-
-    ui->lineInput->setText("a.aac");
-    ui->lineOutput->setText("out.wav");
 }
 
 MainWindow::~MainWindow()
@@ -80,9 +79,11 @@ void MainWindow::chooseOutput()
     QFileDialog diag;
     QStringList filters;
     QStringList filenames;
+    QFileInfo output;
+    QString outputname;
 
-    filters << "PCM s16le (*.wav)(*.wav)"
-            << "MP3 cbr 320k (*.mp3)(*.mp3)";
+    filters << "PCM Wave(*.wav)"
+            << "MP3(*.mp3)";
 
     diag.setAcceptMode(diag.AcceptSave);
     diag.setFileMode(diag.AnyFile);
@@ -93,9 +94,17 @@ void MainWindow::chooseOutput()
 
     filenames = diag.selectedFiles();
 
-    if(filenames.count() > 0)
-        ui->lineOutput->setText(diag.selectedFiles().at(0));
-    else
+    if(filenames.count() > 0) {
+        outputname = diag.selectedFiles().at(0);
+        output.setFile(outputname);
+
+        if(output.suffix() == "wav" || output.suffix() == "mp3")
+            ui->lineOutput->setText(outputname);
+        else {
+            outputname.append(".wav");
+            ui->lineOutput->setText(outputname);
+        }
+    } else
         ui->lineOutput->setText("");
 }
 
@@ -127,9 +136,64 @@ void MainWindow::chooseFFmpeg()
         ui->lineFFMpeg->setText("");
 }
 
+void MainWindow::cmdPreConstructorOutput()
+{
+    QFileInfo output;
+    output.setFile(ui->lineOutput->text());
+
+    if(output.suffix() == "wav") {
+        if(ui->comboBox->currentIndex() != 0)
+            disconnect(ui->comboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(cmdPreConstructorCombo()));
+            ui->comboBox->setCurrentIndex(0);
+            connect(ui->comboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(cmdPreConstructorCombo()));
+    }
+
+    if(output.suffix() == "mp3") {
+        if(ui->comboBox->currentIndex() != 1 || ui->comboBox->currentIndex() != 2 || ui->comboBox->currentIndex() != 3)
+            disconnect(ui->comboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(cmdPreConstructorCombo()));
+            ui->comboBox->setCurrentIndex(1);
+            connect(ui->comboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(cmdPreConstructorCombo()));
+    }
+
+    cmdConstructor();
+}
+
+void MainWindow::cmdPreConstructorCombo()
+{
+    QFileInfo output;
+    QString outputname;
+    QString outputnamecropped;
+
+    outputname = ui->lineOutput->text();
+    output.setFile(outputname);
+
+    if(ui->comboBox->currentIndex() == 0) {
+        if(output.suffix() != "wav") {
+            outputnamecropped = outputname.left(outputname.lastIndexOf("."));
+            outputnamecropped.append(".wav");
+
+            disconnect(ui->lineOutput, SIGNAL(textChanged(QString)), this, SLOT(cmdPreConstructorOutput()));
+            ui->lineOutput->setText(outputnamecropped);
+            connect(ui->lineOutput, SIGNAL(textChanged(QString)), this, SLOT(cmdPreConstructorOutput()));
+        }
+    }
+
+    if(ui->comboBox->currentIndex() == 1 || ui->comboBox->currentIndex() == 2 || ui->comboBox->currentIndex() == 3) {
+        if(output.suffix() != "mp3") {
+            outputnamecropped = outputname.left(outputname.lastIndexOf("."));
+            outputnamecropped.append(".mp3");
+
+            disconnect(ui->lineOutput, SIGNAL(textChanged(QString)), this, SLOT(cmdPreConstructorOutput()));
+            ui->lineOutput->setText(outputnamecropped);
+            connect(ui->lineOutput, SIGNAL(textChanged(QString)), this, SLOT(cmdPreConstructorOutput()));
+        }
+    }
+
+    cmdConstructor();
+}
+
 void MainWindow::cmdConstructor()
 {
-    int format_defined;
     QFileInfo input;
     QFileInfo output;
     QFileInfo ffmpeg;
@@ -138,33 +202,51 @@ void MainWindow::cmdConstructor()
     output.setFile(ui->lineOutput->text());
     ffmpeg.setFile(ui->lineFFMpeg->text());
 
-    format_defined = 0;
-
     arguments.clear();
 
-    if(output.suffix() == "wav" || output.suffix() == "mp3")
-        format_defined = 1;
-
-    if(format_defined == 1 && ffmpeg.exists() == true) {
+    if(input.exists() == true && ffmpeg.exists() == true && (output.suffix() == "wav" || output.suffix() == "mp3")) {
         arguments.append(ui->lineFFMpeg->text());
         arguments.append("-i");
         arguments.append(ui->lineInput->text());
         arguments.append("-codec:a");
 
-        if(output.suffix() == "mp3") {
+        if(ui->comboBox->currentIndex() == 0) {
+            arguments.append("pcm_s16le");
+            arguments.append("-ac");
+            arguments.append("2");
+            arguments.append("-ar");
+            arguments.append("44100");
+        }
+
+        if(ui->comboBox->currentIndex() == 1) {
             arguments.append("libmp3lame");
             arguments.append("-b:a");
             arguments.append("320k");
+            arguments.append("-ac");
+            arguments.append("2");
+            arguments.append("-ar");
+            arguments.append("44100");
         }
 
-        if(output.suffix() == "wav") {
-            arguments.append("pcm_s16le");
+        if(ui->comboBox->currentIndex() == 2) {
+            arguments.append("libmp3lame");
+            arguments.append("-b:a");
+            arguments.append("192k");
+            arguments.append("-ac");
+            arguments.append("2");
+            arguments.append("-ar");
+            arguments.append("44100");
         }
 
-        arguments.append("-ac");
-        arguments.append("2");
-        arguments.append("-ar");
-        arguments.append("44100");
+        if(ui->comboBox->currentIndex() == 3) {
+            arguments.append("libmp3lame");
+            arguments.append("-b:a");
+            arguments.append("96k");
+            arguments.append("-ac");
+            arguments.append("1");
+            arguments.append("-ar");
+            arguments.append("44100");
+        }
 
         arguments.append("-y");
         arguments.append(ui->lineOutput->text());
@@ -236,4 +318,9 @@ void MainWindow::ffProcessFinished()
 {
     ui->buttonRun->setEnabled(true);
     setStatusBarMessage("Finished!!");
+}
+
+void MainWindow::ffProcessParseLog()
+{
+    ui->progressBar->setValue(4);
 }

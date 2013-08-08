@@ -13,4 +13,4 @@
 *.a
 
 # Personal informations
-qtffmpeg.pro.user
+*.pro.user
