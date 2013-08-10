@@ -135,9 +135,9 @@
     <widget class="QPushButton" name="buttonRun">
      <property name="geometry">
       <rect>
-       <x>10</x>
+       <x>80</x>
        <y>250</y>
-       <width>361</width>
+       <width>221</width>
        <height>23</height>
       </rect>
      </property>
@@ -200,7 +200,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QLabel" name="labelFFmpeg_2">
+    <widget class="QLabel" name="labelFormat">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -245,6 +245,32 @@
        <string>MP3 Low (cbr 96k mono)</string>
       </property>
      </item>
+    </widget>
+    <widget class="QPushButton" name="buttonAbout">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>250</y>
+       <width>71</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>About</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="buttonClose">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>250</y>
+       <width>71</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Close</string>
+     </property>
     </widget>
    </widget>
   </widget>

@@ -3,7 +3,7 @@
 #include <QFileDialog>
 #include <QProcess>
 #include <QTextStream>
-#include <QDebug>
+#include <QMessageBox>
 
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
@@ -19,6 +19,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     can_run = 0;
 
+    connect(ui->buttonClose, SIGNAL(clicked()), this, SLOT(close()));
+    connect(ui->buttonAbout, SIGNAL(clicked()), this, SLOT(about()));
     connect(ui->buttonInput, SIGNAL(clicked()), this, SLOT(chooseInput()));
     connect(ui->buttonOutput, SIGNAL(clicked()), this, SLOT(chooseOutput()));
     connect(ui->buttonFFmpeg, SIGNAL(clicked()), this, SLOT(chooseFFmpeg()));
@@ -45,6 +47,40 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::close()
+{
+    qApp->exit(0);
+}
+
+void MainWindow::about()
+{
+    QMessageBox::about(this,
+                       "QtFFmpeg",
+                       "<h1>QtFFmpeg 1.1.1</h1>"
+                       "<h2>Simple QT GUI for FFmpeg</h2>"
+                       "<h3>Copyright (C) 2013  Luca Cireddu<br />"
+                       "sardylan@gmail.com<br />"
+                       "<a href=\"http://qtffmpeg.thehellnet.org/\">http://qtffmpeg.thehellnet.org/</a></h3>"
+                       "<p>This program is free software; you can redistribute it and/or<br />"
+                       "modify it under the terms of the GNU General Public License<br />"
+                       "as published by the Free Software Foundation; either version 2<br />"
+                       "of the License, or (at your option) any later version.</p>"
+                       "<p>This program is distributed in the hope that it will be useful,<br />"
+                       "but WITHOUT ANY WARRANTY; without even the implied warranty of<br />"
+                       "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the<br />"
+                       "GNU General Public License for more details.</p>"
+                       "<p>You should have received a copy of the GNU General Public License<br />"
+                       "along with this program; if not, write to the Free Software<br />"
+                       "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.</p>"
+                       "<p><a href=\"http://www.gnu.org/licenses/gpl-2.0.html\">http://www.gnu.org/licenses/gpl-2.0.html</a></p>"
+                       "<hr />"
+                       "<p><a href=\"http://qt-project.org/\">Qt Libraries</a> are licensed under the "
+                       "<a href=\"http://www.gnu.org/licenses/gpl.html\">GNU GPLv3</a> "
+                       "and the <a href=\"http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html\">GNU LGPLv2.1</a>.</p>"
+                       "<p><a href=\"http://www.ffmpeg.org/\"FFmpeg</a> static build includes code from <a href=\"http://lame.sourceforge.net/\">LAME</a>.</p>"
+                       "<p>Both are released under the <a href=\"http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html\">GNU LGPLv2.1</a>.</p>");
 }
 
 void MainWindow::chooseInput()

@@ -27,6 +27,8 @@ private:
     int ffTimeParser(QString);
 
 private slots:
+    void close();
+    void about();
     void chooseInput();
     void chooseOutput();
     void chooseFFmpeg();
