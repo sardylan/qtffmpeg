@@ -24,7 +24,6 @@ private:
     int can_run;
     QProcess* proc;
 
-    void osProber();
     int ffTimeParser(QString);
 
 private slots:

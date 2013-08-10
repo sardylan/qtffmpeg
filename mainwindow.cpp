@@ -35,23 +35,17 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(proc, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(ffProcessFinished()));
     connect(proc, SIGNAL(readyReadStandardError()), this, SLOT(ffProcessParseLog()));
 
-    osProber();
-}
-
-MainWindow::~MainWindow()
-{
-    delete ui;
-}
-
-void MainWindow::osProber()
-
-{
 #ifdef Q_OS_LINUX
     ui->lineFFMpeg->setText("/usr/bin/ffmpeg");
 #endif
 #ifdef Q_OS_WIN
     ui->lineFFMpeg->setText("ffmpeg.exe");
 #endif
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
 }
 
 void MainWindow::chooseInput()
