@@ -35,11 +35,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(proc, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(ffProcessFinished()));
     connect(proc, SIGNAL(readyReadStandardError()), this, SLOT(ffProcessParseLog()));
 
-#ifdef Q_OS_LINUX
-    ui->lineFFMpeg->setText("/usr/bin/ffmpeg");
-#endif
 #ifdef Q_OS_WIN
     ui->lineFFMpeg->setText("ffmpeg.exe");
+#else
+    ui->lineFFMpeg->setText("/usr/bin/ffmpeg");
 #endif
 }
 
@@ -111,11 +110,10 @@ void MainWindow::chooseFFmpeg()
     QStringList filters;
     QStringList filenames;
 
-#ifdef Q_OS_LINUX
-    filters << "FFmpeg Executables(ffmpeg)";
-#endif
 #ifdef Q_OS_WIN
     filters << "FFmpeg Executables(ffmpeg.exe)";
+#else
+    filters << "FFmpeg Executables(ffmpeg)";
 #endif
 
     diag.setAcceptMode(diag.AcceptOpen);
