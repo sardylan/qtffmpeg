@@ -348,6 +348,7 @@ void MainWindow::ffProcessStarted()
 void MainWindow::ffProcessFinished()
 {
     ui->buttonRun->setEnabled(true);
+    ui->progressBar->setValue(ui->progressBar->maximum());
     setStatusBarMessage("Finished!!");
 }
 
